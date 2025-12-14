@@ -56,23 +56,22 @@ func main() {
 		w.Write([]byte("Coche no encontrado"))
 	})
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/crear-coche" {
-			var cocheBytes cocheRequest
-			err := json.NewDecoder(r.Body).Decode(&cocheBytes)
-			if err != nil {
-				w.Write([]byte(fmt.Errorf("fallo al leer la request %w", err).Error()))
-				return
-			}
-
-			nuevoCoche := crearCoche(cocheBytes.Marca, cocheBytes.Modelo, cocheBytes.Anyo, len(coches))
-			coches = append(coches, nuevoCoche)
-
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(nuevoCoche)
+	http.HandleFunc("/crear-coche", func(w http.ResponseWriter, r *http.Request) {
+		var cocheBytes cocheRequest
+		err := json.NewDecoder(r.Body).Decode(&cocheBytes)
+		if err != nil {
+			w.Write([]byte(fmt.Errorf("fallo al leer la request %w", err).Error()))
 			return
 		}
 
+		nuevoCoche := crearCoche(cocheBytes.Marca, cocheBytes.Modelo, cocheBytes.Anyo, len(coches))
+		coches = append(coches, nuevoCoche)
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(nuevoCoche)
+	})
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		respuesta := map[string]any{
 			"mensaje": "Lista de coches",
 			"coches":  coches,
