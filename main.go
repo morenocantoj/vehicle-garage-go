@@ -14,6 +14,12 @@ type Vehiculo struct {
 	Anyo          int
 }
 
+type cocheRequest struct {
+	Marca  string `json:"marca"`
+	Modelo string `json:"modelo"`
+	Anyo   int    `json:"anyo"`
+}
+
 func main() {
 	puerto := ":8080"
 
@@ -26,6 +32,22 @@ func main() {
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/crear-coche" {
+			var cocheBytes cocheRequest
+			err := json.NewDecoder(r.Body).Decode(&cocheBytes)
+			if err != nil {
+				w.Write([]byte(fmt.Errorf("fallo al leer la request %w", err).Error()))
+				return
+			}
+
+			nuevoCoche := crearCoche(cocheBytes.Marca, cocheBytes.Modelo, cocheBytes.Anyo, len(coches))
+			coches = append(coches, nuevoCoche)
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(nuevoCoche)
+			return
+		}
+
 		respuesta := map[string]any{
 			"mensaje": "Lista de coches",
 			"coches":  coches,
@@ -41,4 +63,13 @@ func main() {
 	}
 
 	os.Exit(0)
+}
+
+func crearCoche(marca, modelo string, anyo, ultimoIdentificador int) Vehiculo {
+	return Vehiculo{
+		identificador: ultimoIdentificador + 1,
+		Marca:         marca,
+		Modelo:        modelo,
+		Anyo:          anyo,
+	}
 }
