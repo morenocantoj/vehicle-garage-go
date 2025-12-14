@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 type Vehiculo struct {
@@ -30,6 +31,30 @@ func main() {
 		{identificador: 2, Marca: "Honda", Modelo: "Civic", Anyo: 2019},
 		{identificador: 3, Marca: "Ford", Modelo: "Mustang", Anyo: 2021},
 	}
+
+	http.HandleFunc("/ver-coche/{id}", func(w http.ResponseWriter, r *http.Request) {
+		identificadorCocheParam := r.PathValue("id")
+		if identificadorCocheParam == "" {
+			w.Write([]byte("Falta el identificador del coche"))
+			return
+		}
+
+		identificadorCoche, err := strconv.Atoi(identificadorCocheParam)
+		if err != nil {
+			w.Write([]byte(fmt.Errorf("identificador del coche no es un número válido: %w", err).Error()))
+			return
+		}
+
+		for _, coche := range coches {
+			if coche.identificador == identificadorCoche {
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(coche)
+				return
+			}
+		}
+
+		w.Write([]byte("Coche no encontrado"))
+	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/crear-coche" {
