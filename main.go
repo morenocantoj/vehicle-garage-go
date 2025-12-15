@@ -26,11 +26,7 @@ func main() {
 
 	fmt.Printf("Servidor iniciando en el puerto %s\n", puerto)
 
-	coches := []Vehiculo{
-		{identificador: 1, Marca: "Toyota", Modelo: "Corolla", Anyo: 2020},
-		{identificador: 2, Marca: "Honda", Modelo: "Civic", Anyo: 2019},
-		{identificador: 3, Marca: "Ford", Modelo: "Mustang", Anyo: 2021},
-	}
+	coches := []Vehiculo{}
 
 	http.HandleFunc("/ver-coche/{id}", func(w http.ResponseWriter, r *http.Request) {
 		identificadorCocheParam := r.PathValue("id")
