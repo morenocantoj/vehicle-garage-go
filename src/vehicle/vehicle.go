@@ -17,3 +17,18 @@ func NewCar(brand, model string, year int) Vehicle {
 		Year:  year,
 	}
 }
+
+func (v Vehicle) ContaminationBadge() string {
+	switch {
+	case v.Year >= 2020:
+		return "A"
+	case v.Year >= 2015:
+		return "B"
+	case v.Year >= 2010:
+		return "C"
+	case v.Year >= 2005:
+		return "D"
+	default:
+		return "E"
+	}
+}
