@@ -9,10 +9,10 @@ import (
 )
 
 type Vehicle struct {
-	id    int
-	Brand string
-	Model string
-	Year  int
+	ID    int    `json:"id"`
+	Brand string `json:"brand"`
+	Model string `json:"model"`
+	Year  int    `json:"year"`
 }
 
 type CarRequest struct {
@@ -28,52 +28,85 @@ func main() {
 
 	cars := []Vehicle{}
 
-	http.HandleFunc("/view-car/{id}", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/cars", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "GET":
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(cars)
+
+		case "POST":
+			var carRequest CarRequest
+			err := json.NewDecoder(r.Body).Decode(&carRequest)
+			if err != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(map[string]string{
+					"error": "Invalid JSON format",
+				})
+				return
+			}
+
+			newCar := createCar(carRequest.Brand, carRequest.Model, carRequest.Year, len(cars))
+			cars = append(cars, newCar)
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(newCar)
+
+		default:
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "Method not allowed",
+			})
+		}
+	})
+
+	http.HandleFunc("/cars/{id}", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "Method not allowed",
+			})
+			return
+		}
+
 		carIDParam := r.PathValue("id")
 		if carIDParam == "" {
-			w.Write([]byte("Missing car ID"))
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "Missing car ID",
+			})
 			return
 		}
 
 		carID, err := strconv.Atoi(carIDParam)
 		if err != nil {
-			w.Write([]byte(fmt.Errorf("car ID is not a valid number: %w", err).Error()))
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "Invalid car ID format",
+			})
 			return
 		}
 
 		for _, car := range cars {
-			if car.id == carID {
+			if car.ID == carID {
 				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(car)
 				return
 			}
 		}
 
-		w.Write([]byte("Car not found"))
-	})
-
-	http.HandleFunc("/create-car", func(w http.ResponseWriter, r *http.Request) {
-		var carRequest CarRequest
-		err := json.NewDecoder(r.Body).Decode(&carRequest)
-		if err != nil {
-			w.Write([]byte(fmt.Errorf("failed to read request: %w", err).Error()))
-			return
-		}
-
-		newCar := createCar(carRequest.Brand, carRequest.Model, carRequest.Year, len(cars))
-		cars = append(cars, newCar)
-
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(newCar)
-	})
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		response := map[string]any{
-			"message": "List of cars",
-			"cars":    cars,
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Car not found",
+		})
 	})
 
 	err := http.ListenAndServe(port, nil)
@@ -87,7 +120,7 @@ func main() {
 
 func createCar(brand, model string, year, lastID int) Vehicle {
 	return Vehicle{
-		id:    lastID + 1,
+		ID:    lastID + 1,
 		Brand: brand,
 		Model: model,
 		Year:  year,
