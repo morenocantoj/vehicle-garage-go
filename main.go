@@ -8,88 +8,88 @@ import (
 	"strconv"
 )
 
-type Vehiculo struct {
-	identificador int
-	Marca         string
-	Modelo        string
-	Anyo          int
+type Vehicle struct {
+	id    int
+	Brand string
+	Model string
+	Year  int
 }
 
-type cocheRequest struct {
-	Marca  string `json:"marca"`
-	Modelo string `json:"modelo"`
-	Anyo   int    `json:"anyo"`
+type CarRequest struct {
+	Brand string `json:"brand"`
+	Model string `json:"model"`
+	Year  int    `json:"year"`
 }
 
 func main() {
-	puerto := ":8080"
+	port := ":8080"
 
-	fmt.Printf("Servidor iniciando en el puerto %s\n", puerto)
+	fmt.Printf("Server starting on port %s\n", port)
 
-	coches := []Vehiculo{}
+	cars := []Vehicle{}
 
-	http.HandleFunc("/ver-coche/{id}", func(w http.ResponseWriter, r *http.Request) {
-		identificadorCocheParam := r.PathValue("id")
-		if identificadorCocheParam == "" {
-			w.Write([]byte("Falta el identificador del coche"))
+	http.HandleFunc("/view-car/{id}", func(w http.ResponseWriter, r *http.Request) {
+		carIDParam := r.PathValue("id")
+		if carIDParam == "" {
+			w.Write([]byte("Missing car ID"))
 			return
 		}
 
-		identificadorCoche, err := strconv.Atoi(identificadorCocheParam)
+		carID, err := strconv.Atoi(carIDParam)
 		if err != nil {
-			w.Write([]byte(fmt.Errorf("identificador del coche no es un número válido: %w", err).Error()))
+			w.Write([]byte(fmt.Errorf("car ID is not a valid number: %w", err).Error()))
 			return
 		}
 
-		for _, coche := range coches {
-			if coche.identificador == identificadorCoche {
+		for _, car := range cars {
+			if car.id == carID {
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(coche)
+				json.NewEncoder(w).Encode(car)
 				return
 			}
 		}
 
-		w.Write([]byte("Coche no encontrado"))
+		w.Write([]byte("Car not found"))
 	})
 
-	http.HandleFunc("/crear-coche", func(w http.ResponseWriter, r *http.Request) {
-		var cocheBytes cocheRequest
-		err := json.NewDecoder(r.Body).Decode(&cocheBytes)
+	http.HandleFunc("/create-car", func(w http.ResponseWriter, r *http.Request) {
+		var carRequest CarRequest
+		err := json.NewDecoder(r.Body).Decode(&carRequest)
 		if err != nil {
-			w.Write([]byte(fmt.Errorf("fallo al leer la request %w", err).Error()))
+			w.Write([]byte(fmt.Errorf("failed to read request: %w", err).Error()))
 			return
 		}
 
-		nuevoCoche := crearCoche(cocheBytes.Marca, cocheBytes.Modelo, cocheBytes.Anyo, len(coches))
-		coches = append(coches, nuevoCoche)
+		newCar := createCar(carRequest.Brand, carRequest.Model, carRequest.Year, len(cars))
+		cars = append(cars, newCar)
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(nuevoCoche)
+		json.NewEncoder(w).Encode(newCar)
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		respuesta := map[string]any{
-			"mensaje": "Lista de coches",
-			"coches":  coches,
+		response := map[string]any{
+			"message": "List of cars",
+			"cars":    cars,
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(respuesta)
+		json.NewEncoder(w).Encode(response)
 	})
 
-	err := http.ListenAndServe(puerto, nil)
+	err := http.ListenAndServe(port, nil)
 	if err != nil {
-		fmt.Printf("Error al iniciar el servidor: %v\n", err)
+		fmt.Printf("Error starting server: %v\n", err)
 		os.Exit(1)
 	}
 
 	os.Exit(0)
 }
 
-func crearCoche(marca, modelo string, anyo, ultimoIdentificador int) Vehiculo {
-	return Vehiculo{
-		identificador: ultimoIdentificador + 1,
-		Marca:         marca,
-		Modelo:        modelo,
-		Anyo:          anyo,
+func createCar(brand, model string, year, lastID int) Vehicle {
+	return Vehicle{
+		id:    lastID + 1,
+		Brand: brand,
+		Model: model,
+		Year:  year,
 	}
 }
