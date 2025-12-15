@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-highschool-api/src/handler"
+	"go-highschool-api/src/vehicle"
 	"net/http"
 	"os"
 )
@@ -13,13 +14,17 @@ func main() {
 
 	fmt.Printf("Server starting on port %s\n", port)
 
+	// Dependencies
+	vehicleRepository := vehicle.NewInMemoryRepository()
+	vehicleHandler := handler.NewVehicleHandler(vehicleRepository)
+
 	http.HandleFunc("/cars", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
-			handler.ListVehicles(w, r)
+			vehicleHandler.ListVehicles(w, r)
 
 		case "POST":
-			handler.CreateVehicle(w, r)
+			vehicleHandler.CreateVehicle(w, r)
 
 		default:
 			w.Header().Set("Content-Type", "application/json")
@@ -40,7 +45,7 @@ func main() {
 			return
 		}
 
-		handler.RetrieveVehicle(w, r, r.PathValue("id"))
+		vehicleHandler.RetrieveVehicle(w, r, r.PathValue("id"))
 	})
 
 	err := http.ListenAndServe(port, nil)
