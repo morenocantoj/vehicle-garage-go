@@ -1,15 +1,17 @@
 package vehicle
 
+import "github.com/google/uuid"
+
 type Vehicle struct {
-	ID    int    `json:"id"`
-	Brand string `json:"brand"`
-	Model string `json:"model"`
-	Year  int    `json:"year"`
+	ID    uuid.UUID `json:"id"`
+	Brand string    `json:"brand"`
+	Model string    `json:"model"`
+	Year  int       `json:"year"`
 }
 
-func NewCar(brand, model string, year, lastID int) Vehicle {
+func NewCar(brand, model string, year int) Vehicle {
 	return Vehicle{
-		ID:    lastID + 1,
+		ID:    uuid.New(),
 		Brand: brand,
 		Model: model,
 		Year:  year,
