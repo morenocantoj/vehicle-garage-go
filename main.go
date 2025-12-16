@@ -9,12 +9,12 @@ import (
 func main() {
 	puerto := ":8080"
 
-	fmt.Printf("Servidor iniciando en el puerto %s\n", puerto)
-
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "Ye que pasa mundo")
+		w.Write([]byte("Ye que pasa mundo"))
 	})
+
+	fmt.Printf("Servidor iniciando en el puerto %s\n", puerto)
 
 	err := http.ListenAndServe(puerto, nil)
 	if err != nil {
